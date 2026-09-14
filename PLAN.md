@@ -8,7 +8,7 @@ Build a small, reproducible experiment around this hypothesis:
 
 Success means answering that question honestly with held-out evidence and understandable failure cases. It does not require a positive result, a particular AUROC, or a new localization algorithm. Do not fill the resume placeholders with targets or development-set results.
 
-**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. Environment/data preparation, GPU matching, pose conventions, and reference-only calibration/triangulation probes are complete. Final source-based calibration caveats and the checkpoint recommendation are pending. Chunk 2 is not authorized.
+**Current state:** Chunk 1 reached its checkpoint on 2026-09-14 but is blocked at the RGB geometry gate. The environment, Chess preparation, GPU matching, and reference-only diagnostic implementation are complete and committed. Independent held-out reference reprojection fails the declared acceptance criteria. Original poses describe the depth sensor; the identity depth-to-RGB approximation has not proved adequate. Stop for approval of one bounded recovery or a mapping/dataset adjustment. Chunk 2 is not authorized.
 
 Work one chunk at a time. At every checkpoint, report the artifacts, observed results, time/storage used, blockers, and recommended next decision. Stop and wait for explicit approval before starting another chunk. If a chunk fails its exit criteria, discuss a bounded recovery attempt rather than silently expanding scope.
 
@@ -16,7 +16,7 @@ On resuming, read this file, inspect the actual repository/artifacts, and update
 
 | Chunk | Status | Approval needed next |
 | --- | --- | --- |
-| 1. Environment, data, and pose conventions | Technical evidence collected; calibration caveat review pending | Review the completed checkpoint before authorizing Chunk 2 |
+| 1. Environment, data, and pose conventions | Blocked at checkpoint: independent reference reprojection fails | Approve one bounded calibration recovery or discuss a mapping/dataset adjustment |
 | 2. One-scene localization and failure audit | Not started | Pilot design approved after Chunk 1 |
 | 3. Confidence model and development comparison | Not started | Failure evidence and features approved |
 | 4. Frozen held-out benchmark | Not started | Protocol and any scene expansion approved |
@@ -215,21 +215,45 @@ The GPU probe processed 26 references and 325 pairs at native 640x480 with a
 2,048-feature cap. A shared effective PINHOLE camera, fitted on 20 references
 only, gave 1.85 px median / 6.19 px p90 Sampson error on six other references;
 76.6% of those selected matches were within 4 px. Independent fit/holdout
-triangulations produced 2,514/791 points, median reprojection errors of
-1.71/1.24 px, positive retained-observation depths, and unchanged reference
-poses up to floating-point roundoff. This passes the declared numerical
-plausibility criteria but is not physical RGB/depth calibration or a
-validation of centimeter-level query labels. Map residuals are additionally
-subject to COLMAP's 4 px observation filter.
+triangulations in the current saved run produced 2,515/792 points, median
+reprojection errors of 1.71/1.25 px, positive retained-observation depths,
+and unchanged reference poses up to floating-point roundoff. Their small
+residuals were insufficient to close the geometry gate: they include point
+fitting and COLMAP's 4 px observation filter.
+
+Source review established that the original poses belong to the depth
+sensor, not RGB. The fitted camera assumes identity depth-to-RGB extrinsics,
+not a measured sensor calibration. An additional independent 3D reprojection
+gate was committed before measuring it: predict observations in the six
+other references from the fit-only map, without adjusting their poses or
+structure or rejecting their reprojection errors. The result was
+**6.34 px median / 18.72 px p90**, versus declared limits of **2 / 5 px**,
+over 5,811 positive-depth associations; one additional association had
+nonpositive depth. Every image had substantial support and spatial coverage.
+No gate was relaxed and no query was used. The overall geometry outcome is
+**failed**, despite the earlier favorable within-map residuals.
 
 The working tree uses about 9.1 GiB, excluding the separately shared `uv`
 cache (about 12 GiB total, with possible pre-existing/hard-linked content).
 The Chess archive download took about 17 minutes while package installation
 ran concurrently. Reference extraction/matching took 0.71/12.24 seconds,
 including initial setup and matcher-weight download; geometry took about
-0.94 seconds. These are probe timings, not online query latency. No native
+1.07 seconds including the independent measurement. These are probe timings,
+not online query latency. About 50 minutes elapsed from authorization to the
+checkpoint, including concurrent downloads and research, not measured
+hands-on engineering time. No native
 Linux migration, cloud infrastructure, or additional scene was needed.
-The final caveat assessment and checkpoint recommendation remain pending.
+
+**Checkpoint decision:** stop here. `results/chunk1/checkpoint.json` links
+the artifacts, sensor-frame sources, and failure summary. The recommended
+next approval is one bounded reference-only shared sensor-extrinsic and
+calibration attempt with the original depth trajectory fixed. Reserve fresh
+reference observations for acceptance because the current six images have
+become development diagnostics. Keep the same strict no-query/no-depth/
+no-supplied-map constraints and do not silently loosen the gates. A new
+dataset or reference-only SfM strategy requires a separate decision if
+recovery is unsuitable or fails. The 5 cm / 5 degree correctness threshold
+remains proposed, not validated by this probe.
 
 ### Chunk 2: Working one-scene localization and failure audit (about 8-12 hours)
 
@@ -306,5 +330,7 @@ If there are too few wrong returned poses or the score does not improve risk, re
 - [hloc solver and fallback behavior](https://github.com/cvg/Hierarchical-Localization/blob/master/hloc/localize_sfm.py)
 - [LightGlue feature support and pretrained matchers](https://github.com/cvg/LightGlue)
 - [7-Scenes data format, camera limitations, and terms](https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/)
+- [ICCV 2021: On the Limits of Pseudo Ground Truth in Visual Camera Re-localisation](https://arxiv.org/html/2109.00524)
+- [ACE's explicit original-depth versus corrected-RGB pose policy](https://github.com/nianticlabs/ace/blob/e9e90f2d02ee92c348bf411a5a60e230af6c315e/datasets/setup_7scenes.py)
 
 These sources informed the plan on 2026-09-14. Resolve and record compatible upstream commit/version pins during Chunk 1; do not treat moving branch documentation as a reproducible environment.

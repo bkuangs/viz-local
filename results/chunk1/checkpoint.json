@@ -1,0 +1,76 @@
+{
+  "date": "2026-09-14",
+  "chunk": 1,
+  "status": "blocked_geometry_gate",
+  "chunk_2_authorized": false,
+  "budget": {
+    "tier": "balanced",
+    "engineering_hours_allowance": [35, 50],
+    "working_space_gb_allowance": [40, 60],
+    "elapsed_to_checkpoint_minutes_approx": 50,
+    "elapsed_scope": "Wall time including concurrent downloads and research; hands-on engineering time was not measured",
+    "workspace_gib_approx": 9.1,
+    "shared_uv_cache_gib_approx": 12,
+    "shared_cache_note": "Total shared cache, not incremental project usage; may include pre-existing and hard-linked files",
+    "new_infrastructure_purchased": false
+  },
+  "artifacts": {
+    "environment": "results/chunk1/environment.json",
+    "data_summary": "results/chunk1/data.json",
+    "probe_summary": "results/chunk1/probe.json",
+    "data_manifest": "artifacts/chunk1/data_manifest.json",
+    "latest_geometry_pointer": "artifacts/chunk1/probe/latest.json",
+    "matched_reference_pair": "artifacts/chunk1/probe/reference_pair.png",
+    "commands": "README.md"
+  },
+  "completed": [
+    "One pinned CUDA/Python/hloc/LightGlue/PyCOLMAP environment",
+    "Official Chess split inspection and deterministic four-role manifest",
+    "Camera-center, rotation, pose inversion, and native COLMAP coordinate helpers",
+    "Real GPU extraction and matching on 26 references and 325 pairs",
+    "Reference-only effective PINHOLE fitting and fixed-pose sparse triangulation",
+    "Independent held-out reference projection with complete support/failure accounting"
+  ],
+  "sensor_frame_policy": {
+    "original_pose_sensor": "depth",
+    "pose_convention": "sensor_to_world",
+    "translation_units": "meters",
+    "depth_to_rgb_extrinsic": "Identity assumption for this probe; not physically calibrated",
+    "estimated_rgb_intrinsics": "Reference-only effective PINHOLE parameters, not device calibration",
+    "query_pose_values_used": false,
+    "query_attempts_run": 0,
+    "reference_poses_adjusted": false,
+    "supplied_sfm_or_depth_used": false
+  },
+  "blocking_evidence": {
+    "independent_reprojection_median_px": 6.33641339536542,
+    "independent_reprojection_p90_px": 18.721135708198883,
+    "declared_median_limit_px": 2,
+    "declared_p90_limit_px": 5,
+    "positive_depth_associations": 5811,
+    "nonpositive_depth_associations": 1,
+    "all_six_images_have_adequate_support_and_coverage": true,
+    "gates_loosened_after_observation": false,
+    "interpretation": "Low within-map residuals did not predict untouched reference observations. Sensor mismatch, drift, map quality, and ambiguous matches remain possible contributors; no single cause has been isolated."
+  },
+  "sources": {
+    "dataset": "https://www.microsoft.com/en-us/research/project/rgb-d-dataset-7-scenes/",
+    "ground_truth_limitations": "https://arxiv.org/html/2109.00524",
+    "ace_pose_sensor_policy": "https://github.com/nianticlabs/ace/blob/e9e90f2d02ee92c348bf411a5a60e230af6c315e/datasets/setup_7scenes.py",
+    "local_dataset_license": "data/downloads/7-scenes-license.rtf",
+    "dataset_license_sha256": "497415ee4e6243dc09ccb5ebf510771e965e4a7f93dc1de4485f290e12919f8a"
+  },
+  "recommended_next_decision": {
+    "requires_explicit_approval": true,
+    "action": "One bounded reference-only shared RGB/depth extrinsic and calibration recovery attempt, keeping every original depth trajectory pose fixed",
+    "fresh_acceptance_data": "Reserve previously unused reference observations; the current six held-out reference images are now development diagnostics",
+    "prohibited_expansions": [
+      "Automatic Chunk 2 localization",
+      "Query-based calibration or alignment",
+      "Unconstrained per-frame pose adjustment",
+      "Silently relaxed geometry gates",
+      "Automatic scene, dataset, or mapping-strategy expansion"
+    ],
+    "fallback_decision": "If recovery is unsuitable or fails, discuss a different dataset or approved reference-only SfM strategy"
+  }
+}

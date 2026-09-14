@@ -2,7 +2,7 @@
 
 Failure-aware visual localization: when should a system trust an estimated camera pose?
 
-**Status: Chunk 1 in progress under the approved Balanced budget.** Budget reconnaissance and approval checkpoints are recorded in [PLAN.md](PLAN.md). No localization pipeline, experiments, or measured localization results exist yet. Chunk 2 is not authorized.
+**Status: Chunk 1 paused at the RGB geometry gate.** Environment, data preparation, and reference-only probes are implemented and committed, but independent held-out reference reprojection is not good enough to approve localization. No query-localization or confidence experiments have run. Chunk 2 is not authorized; see [PLAN.md](PLAN.md) for the checkpoint and bounded recovery decision.
 
 ## The question
 
@@ -99,7 +99,7 @@ All 6,000 originals receive a role before subsampling; variants must inherit
 that role. The final count is provisional, not a completed evaluation.
 `artifacts/chunk1/data_manifest.json` records IDs, roles, selection, original
 pose conventions, and per-asset size/CRC32. The original poses are
-camera-to-world transforms in meters; `viz_local.geometry` explicitly converts
+depth-sensor-to-world transforms in meters; `viz_local.geometry` explicitly converts
 them to COLMAP world-to-camera poses and measures camera-center error rather
 than extrinsic-translation error. Preparation does not interpret query pose
 values or decode final-image pixels.
@@ -109,7 +109,7 @@ The selected 700 originals occupy about 299 MB across 1,400 RGB/pose files.
 intrinsics are deliberately pending in the data manifest; they must come from
 the separate reference-only probe, never from assumed depth-camera calibration.
 
-## Chunk 1 reference-only probe
+## Chunk 1 reference-only probe: blocked checkpoint
 
 ```bash
 PYTHONHASHSEED=17 MPLBACKEND=Agg OMP_NUM_THREADS=4 \
@@ -133,19 +133,50 @@ poses and fitted intrinsics fixed; no alignment is applied.
 Observed effective parameters at 640x480 are approximately
 `fx=517.038, fy=526.418, cx=316.418, cy=240.131` in COLMAP pixel coordinates.
 Held-out reference Sampson error is **1.85 px median / 6.19 px p90**, with
-**76.6% within 4 px**. The saved fit/holdout sparse probes have **2,514 / 791
-points**, with median reprojection errors **1.71 / 1.24 px**. All retained
+**76.6% within 4 px**. The current fit/holdout sparse probes have **2,515 / 792
+points**, with median reprojection errors **1.71 / 1.25 px**. All retained
 observations have positive depth; reference pose matrices change only at
 floating-point roundoff. These are plausibility results, not localization
 accuracy or proof of physical RGB calibration. In particular, COLMAP filters
 map observations at 4 px, so their residuals describe a selected subset.
 
-The original data is uncalibrated. Unknown RGB/depth extrinsics, tracking
-errors, lens distortion, and temporal dependence remain; a small inlier
-reprojection error does not validate the proposed 5 cm correctness threshold.
-No supplied SfM model, rendered depth, or query-derived calibration/alignment
-was used. Source-based calibration caveats are still being reviewed before
-closing Chunk 1.
+**Those small residuals were insufficient evidence.** After source review,
+an additional independent measurement was declared and committed before
+running it: project the fit-only map into the six other reference images,
+without fitting their poses, retriangulating their points, or filtering their
+reprojection errors. LightGlue associations are deduplicated by
+`(heldout_keypoint, map_point)` across fit views, including ambiguous associations.
+It produced **6.34 px median / 18.72 px p90** over **5,811 positive-depth
+associations**, failing the declared **2 px / 5 px** gates. One further
+association projected behind the camera. Support and spatial coverage were
+adequate in all six images (616-1,253 associations and 15-16 occupied 4x4 cells).
+The command above now deliberately exits nonzero while preserving the failure
+summary and arrays. No thresholds were loosened after observing this result.
+
+The [ICCV 2021 pseudo-ground-truth analysis](https://arxiv.org/html/2109.00524)
+and [ACE's pose preparation](https://github.com/nianticlabs/ace/blob/e9e90f2d02ee92c348bf411a5a60e230af6c315e/datasets/setup_7scenes.py)
+establish that original 7-Scenes poses describe the **depth sensor, not RGB**.
+This pilot explicitly assumed identity depth-to-RGB extrinsics while fitting
+an effective RGB camera. Its parameters are not a physical RGB calibration.
+ACE's borrowed other-device extrinsic is not verified calibration for this
+recording device and was not copied. Tracking drift, distortion, map quality,
+and ambiguous correspondences can also contribute; this failure does not
+isolate a single cause.
+
+For clarity, if `A` is an original depth-to-world pose and `E` is the fixed
+depth-to-RGB sensor transform, the RGB-to-world pose is `A @ inverse(E)`.
+An estimated RGB-to-world pose would map back to the original evaluation frame
+as `B_rgb @ E`. Here `E` is explicitly identity; a non-identity sensor transform
+has **not** been estimated or applied. No supplied SfM map, depth integration,
+reference pose adjustment, query-derived calibration, or query alignment was used.
+
+The recommended next decision is one separately approved, bounded
+reference-only sensor-extrinsic/calibration recovery attempt, keeping the
+original depth trajectory fixed. Use fresh reference observations for its
+acceptance evidence: the six images above are now development diagnostics,
+not an untouched acceptance set for a changed method. Do not advance to Chunk 2
+or relax the gates automatically. The proposed 5 cm correctness threshold
+remains unvalidated.
 
 Full identities, pair accounting, weights/model hashes, and effective solver
 settings stay under `artifacts/chunk1/probe/`; `latest.json` points to the
@@ -162,6 +193,10 @@ keypoints, so this is not a worst-case 2,048-keypoint memory measurement.
 These timings are not warmed full-query latency. Workspace use is about
 9.1 GiB; the shared `uv` cache separately totals about 12 GiB, may include
 pre-existing content and hard-linked files, and was not deleted.
+About 50 minutes elapsed from Chunk 1 authorization to this checkpoint,
+including concurrent downloads and research; this is not a measured hands-on
+engineering-hours estimate. `results/chunk1/checkpoint.json` records the
+decision, resources, sources, and remaining approval boundary.
 
 ## References
 
