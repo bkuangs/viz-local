@@ -1,0 +1,44 @@
+{
+  "created_at": "2026-09-14T13:54:06.499110+00:00",
+  "dependencies": {
+    "hloc_revision": "c13273bd0ecc2917a35910fd843712a1c6243193",
+    "lightglue_revision": "eb42fee2d71449efb0aa5c10549752b5d75384d8",
+    "packages": {
+      "h5py": "3.14.0",
+      "hloc": "1.5",
+      "lightglue": "0.0",
+      "numpy": "1.26.4",
+      "opencv-python": "4.11.0.86",
+      "pillow": "11.3.0",
+      "pycolmap": "3.13.0",
+      "scipy": "1.15.3",
+      "torch": "2.7.1+cu126",
+      "torchvision": "0.22.1+cu126"
+    },
+    "python": "3.10.12",
+    "superpoint_revision": "ddcf11f42e7e0732a0c4607648f9448ea8d73590",
+    "uv_lock_sha256": "287b10ff63a79ca40a183068a3bc3c1ba1918f206f23063fdccc2af2ca42312d"
+  },
+  "filesystem_free_bytes": 931625938944,
+  "gpu": {
+    "compute_capability": [
+      8,
+      6
+    ],
+    "driver_report": "NVIDIA GeForce RTX 3060 Ti, 616.56",
+    "name": "NVIDIA GeForce RTX 3060 Ti",
+    "torch_cuda_runtime": "12.6",
+    "total_memory_bytes": 8589410304
+  },
+  "logical_cpus": 8,
+  "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+  "ram_bytes": 16770523136,
+  "scope": "Compatibility smoke operations, not localization or query latency",
+  "smoke_elapsed_seconds": 0.9137841509946156,
+  "smoke_operations": [
+    "CUDA matrix multiplication",
+    "torchvision CUDA NMS",
+    "PyCOLMAP pinhole projection"
+  ],
+  "windows_c_free_bytes": 354645413888
+}

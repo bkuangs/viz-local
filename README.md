@@ -35,6 +35,29 @@ Read the checkpoint status and selected budget in [PLAN.md](PLAN.md). Balanced a
 
 Dataset archives, extracted images, maps, weights, and intermediate outputs stay outside Git. Dataset and model licenses still apply; a public repository does not make third-party assets redistributable.
 
+## Chunk 1 environment
+
+Run from the repository root on the existing Linux/WSL2 GPU host, with Python
+3.10 and `uv` available:
+
+```bash
+bash scripts/bootstrap.sh
+uv run --locked python -m viz_local.environment
+```
+
+The bootstrap keeps an unmodified, commit-pinned hloc checkout in ignored
+`external/hloc`; only its required SuperPoint source/weights submodule is
+initialized. LightGlue is pinned to a Git revision in `pyproject.toml` and
+`uv.lock`. PyTorch 2.7.1 and torchvision 0.22.1 use CUDA 12.6 wheels;
+PyCOLMAP is pinned to 3.13.0. All transitive Python dependencies are locked.
+Do not install a second CUDA toolkit or replace the Windows GPU driver from
+inside WSL. COLMAP geometry runs on CPU; neural extraction/matching runs on GPU.
+
+The environment command fails rather than silently falling back to CPU and
+records actual versions, hardware, and compatibility operations in
+`artifacts/chunk1/environment.json`. The initial observed snapshot is in
+`results/chunk1/environment.json`; it is not a localization benchmark.
+
 ## References
 
 - [hloc](https://github.com/cvg/Hierarchical-Localization)
