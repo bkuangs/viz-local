@@ -1,0 +1,54 @@
+{
+  "scene": "chess",
+  "seed": 17,
+  "dataset_url": "https://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/chess.zip",
+  "archive_path": "data/downloads/chess.zip",
+  "archive_size_bytes": 3079608937,
+  "archive_sha256": "d00b5b8f904123ec136768ee0ebd8f72aebb5473630fb5d8ec352e70ae4859d0",
+  "data_root": "data/chess",
+  "manifest_path": "artifacts/chunk1/data_manifest.json",
+  "roles": {
+    "reference": {"sequences": ["seq-01", "seq-02"], "stride": 10},
+    "confidence_fit": {"sequences": ["seq-04"], "stride": 20},
+    "confidence_calibration": {"sequences": ["seq-06"], "stride": 20},
+    "final_evaluation": {"sequences": ["seq-03", "seq-05"], "stride": 5}
+  },
+  "local_features": {
+    "configuration": "superpoint_aachen",
+    "max_keypoints": 2048,
+    "resize_max": 640,
+    "storage": "float32",
+    "matcher": "superpoint+lightglue",
+    "matching_batch_size": 1
+  },
+  "retrieval": {
+    "configuration": "netvlad",
+    "top_k": 10,
+    "status": "selected for Chunk 2; not run during Chunk 1"
+  },
+  "probe": {
+    "reference_subsample": 8,
+    "calibration": {
+      "model": "PINHOLE",
+      "initializations": [[600, 600, 320, 240], [540, 660, 300, 260]],
+      "initialization_provenance": "Heuristic VGA pinhole seeds, not published RGB calibration or depth intrinsics",
+      "lower_bounds": [300, 300, 200, 120],
+      "upper_bounds": [1200, 1200, 440, 360],
+      "min_baseline_m": 0.05,
+      "min_match_score": 0.2,
+      "min_matches_per_pair": 32,
+      "max_matches_per_pair": 256
+    },
+    "acceptance_policy": {
+      "initialization_max_parameter_difference_px": 2,
+      "maximum_jacobian_condition_number": 1000000,
+      "holdout_sampson_median_max_px": 2,
+      "holdout_sampson_fraction_within_4px_min": 0.7,
+      "triangulated_points_min_per_group": 100,
+      "reprojection_median_max_px": 2,
+      "reprojection_p90_max_px": 4,
+      "positive_depth_fraction_min": 1,
+      "images_with_points_fraction_min": 0.8
+    }
+  }
+}

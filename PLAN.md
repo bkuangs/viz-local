@@ -8,7 +8,7 @@ Build a small, reproducible experiment around this hypothesis:
 
 Success means answering that question honestly with held-out evidence and understandable failure cases. It does not require a positive result, a particular AUROC, or a new localization algorithm. Do not fill the resume placeholders with targets or development-set results.
 
-**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. Budget reconnaissance and the pinned CUDA environment are complete; data preparation and the reference-only geometry exit evidence are pending. Chunk 2 is not authorized.
+**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. The pinned CUDA environment, Chess role manifest, pose-convention helpers, and real reference extraction/matching are complete. RGB calibration and triangulation exit evidence are pending. Chunk 2 is not authorized.
 
 Work one chunk at a time. At every checkpoint, report the artifacts, observed results, time/storage used, blockers, and recommended next decision. Stop and wait for explicit approval before starting another chunk. If a chunk fails its exit criteria, discuss a bounded recovery attempt rather than silently expanding scope.
 
@@ -16,7 +16,7 @@ On resuming, read this file, inspect the actual repository/artifacts, and update
 
 | Chunk | Status | Approval needed next |
 | --- | --- | --- |
-| 1. Environment, data, and pose conventions | In progress; budget reconnaissance and pinned CUDA environment complete | Review Chunk 1 evidence before authorizing Chunk 2 |
+| 1. Environment, data, and pose conventions | In progress; environment, data roles, pose helpers, and GPU matching complete | Review RGB geometry evidence before authorizing Chunk 2 |
 | 2. One-scene localization and failure audit | Not started | Pilot design approved after Chunk 1 |
 | 3. Confidence model and development comparison | Not started | Failure evidence and features approved |
 | 4. Frozen held-out benchmark | Not started | Protocol and any scene expansion approved |

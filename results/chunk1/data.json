@@ -1,0 +1,27 @@
+{
+  "archive_sha256": "d00b5b8f904123ec136768ee0ebd8f72aebb5473630fb5d8ec352e70ae4859d0",
+  "archive_size_bytes": 3079608937,
+  "counts": {
+    "confidence_calibration": {
+      "available": 1000,
+      "selected": 50
+    },
+    "confidence_fit": {
+      "available": 1000,
+      "selected": 50
+    },
+    "final_evaluation": {
+      "available": 2000,
+      "selected": 400
+    },
+    "reference": {
+      "available": 2000,
+      "selected": 200
+    }
+  },
+  "elapsed_seconds": 5.09,
+  "manifest_id": "27797ae528ae967799cb785e783a01b9b6e4e026ab22367a6a3b1dc583c9cade",
+  "manifest_path": "artifacts/chunk1/data_manifest.json",
+  "selected_asset_bytes": 298711450,
+  "split_id": "063ada33e2d9baf6c0c74b33c75377f5db2ea62bd51c9aca4f2c1d2cfa0c7ca6"
+}
