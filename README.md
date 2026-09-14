@@ -2,7 +2,7 @@
 
 Failure-aware visual localization: when should a system trust an estimated camera pose?
 
-**Status: planning only.** No localization pipeline, experiments, or measured results exist yet. See [PLAN.md](PLAN.md) for implementation chunks, budget options, and explicit approval checkpoints.
+**Status: Chunk 1 in progress under the approved Balanced budget.** Budget reconnaissance and approval checkpoints are recorded in [PLAN.md](PLAN.md). No localization pipeline, experiments, or measured localization results exist yet. Chunk 2 is not authorized.
 
 ## The question
 
@@ -31,7 +31,7 @@ No web application, custom SLAM system, feature-network training, or large testi
 
 ## Before implementation
 
-Read the checkpoint status and budget options in [PLAN.md](PLAN.md). Choose a budget tier and confirm the GPU machine's operating system and available memory/storage. Implement only the approved chunk, present its evidence, and pause before continuing.
+Read the checkpoint status and selected budget in [PLAN.md](PLAN.md). Balanced allows 35-50 hands-on hours and 40-60 GB working space, starting with Chess only. The current host is Ubuntu on WSL2 with an 8 GB RTX 3060 Ti and about 16 GiB RAM. Chunk 1 must establish actual environment compatibility and pilot cost. Implement only the approved chunk, present its evidence, and pause before continuing.
 
 Dataset archives, extracted images, maps, weights, and intermediate outputs stay outside Git. Dataset and model licenses still apply; a public repository does not make third-party assets redistributable.
 

@@ -8,7 +8,7 @@ Build a small, reproducible experiment around this hypothesis:
 
 Success means answering that question honestly with held-out evidence and understandable failure cases. It does not require a positive result, a particular AUROC, or a new localization algorithm. Do not fill the resume placeholders with targets or development-set results.
 
-**Current state:** the planning repository exists; implementation has not started. Budget selection and approval for Chunk 1 are pending.
+**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. Budget reconnaissance is complete; the remaining Chunk 1 exit evidence is pending. Chunk 2 is not authorized.
 
 Work one chunk at a time. At every checkpoint, report the artifacts, observed results, time/storage used, blockers, and recommended next decision. Stop and wait for explicit approval before starting another chunk. If a chunk fails its exit criteria, discuss a bounded recovery attempt rather than silently expanding scope.
 
@@ -16,7 +16,7 @@ On resuming, read this file, inspect the actual repository/artifacts, and update
 
 | Chunk | Status | Approval needed next |
 | --- | --- | --- |
-| 1. Environment, data, and pose conventions | Not started | Budget tier and permission to begin |
+| 1. Environment, data, and pose conventions | In progress; budget reconnaissance complete | Review Chunk 1 evidence before authorizing Chunk 2 |
 | 2. One-scene localization and failure audit | Not started | Pilot design approved after Chunk 1 |
 | 3. Confidence model and development comparison | Not started | Failure evidence and features approved |
 | 4. Frozen held-out benchmark | Not started | Protocol and any scene expansion approved |
@@ -37,7 +37,44 @@ Targets count unique original final-evaluation images, not their corrupted varia
 
 Start with the same one-scene pilot under every option. A flexible budget is not permission to run all scenes or implement stretch goals.
 
-The RTX 3060 Ti is a reasonable starting device; confirm actual VRAM, system RAM, OS, driver, and CUDA/PyTorch compatibility in Chunk 1. Prefer native Linux for the experiment machine if available. This Mac can hold the repository, but it is not the assumed CUDA execution environment. Do not add Docker, cloud deployment, or a second execution environment unless compatibility makes one necessary.
+### Selected budget and host reconnaissance (2026-09-14)
+
+**Selected: Balanced, 35-50 hands-on hours and a 40-60 GB working-space allowance.** Start with Chess only. The 300-600 unique final-query target remains provisional; a second scene requires development evidence and separate approval. Budget selection does not authorize starting implementation or advancing through chunk checkpoints.
+
+The current experiment host exposes:
+
+- Ubuntu 22.04.5 under WSL2, kernel `6.18.33.2-microsoft-standard-WSL2`.
+- NVIDIA RTX 3060 Ti with 8,192 MiB VRAM; reported Windows driver version `616.56`.
+- 8 logical CPUs on an AMD Ryzen 9 7900X host and about 16 GiB system RAM available to WSL, with about 13 GiB available at inspection.
+- About 347 GiB free on the Windows C: volume. WSL reports about 876 GiB free inside its virtual filesystem; do not treat that as guaranteed physical backing capacity.
+- Python 3.10.12 and `uv` available. The inspected system Python has no installed PyTorch, torchvision, PyCOLMAP, hloc, or LightGlue packages.
+
+This is a reasonable host for attempting the 2,048-feature, single-pair pilot, not evidence of working CUDA inference or sufficient peak memory. Keep the repository and active artifacts in the Linux filesystem. Use this existing WSL2 environment unless Chunk 1 exposes a compatibility blocker; do not add Docker, cloud deployment, or a second execution environment speculatively.
+
+Budget evidence and limits:
+
+- HTTP HEAD requests to the official archives reported Chess at 3,079,608,937 bytes (3.08 GB / 2.87 GiB) and Stairs at 1,496,412,431 bytes (1.50 GB / 1.39 GiB). Stairs was inspected as a size example only, not selected. No dataset contents or pretrained assets were downloaded.
+- The disk allowance must include archives, extracted selected assets, the Python/CUDA environment, model weights, reference maps, and caches. Extracted size and actual cache growth remain to be measured.
+- Balanced's 300-600 final originals imply 2,100-4,200 attempts across seven conditions and up to 21,000-42,000 top-10 query/reference matching pairs, excluding development and map construction. If all final-query descriptors are retained at 2,048 features with 256 float32 values each, descriptor payload alone is about 4.10-8.20 GiB; this excludes keypoints, matches, images, and other records. Query caches cannot substitute for full-query latency measurements.
+- The individual estimates for Chunks 1-5 sum to 26-40 hours. Lean's headline 20-30 hours is therefore optimistic; Balanced provides more room for the RGB camera model, reference-only mapping, and bounded recovery work. It does not guarantee a second scene.
+- No localization throughput, peak GPU memory, or download bandwidth was measured. Engineering hours exclude unattended downloads/compute. No new infrastructure purchase is proposed; electricity and existing hardware costs are not priced.
+
+The main budget risks are defensible RGB geometry and obtaining enough incorrect returned poses, not final inference volume alone. At the Chunk 1 checkpoint, replace assumptions with measured environment/data footprint and probe cost before approving Chunk 2.
+
+To repeat the capacity and archive-size observations without downloading the dataset:
+
+```bash
+uname -r
+free -h
+df -h . /mnt/c
+nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv
+python3 --version
+python3 -m pip show torch torchvision pycolmap hloc lightglue
+curl --head --location --fail --silent --show-error --max-time 30 \
+  https://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/chess.zip
+curl --head --location --fail --silent --show-error --max-time 30 \
+  https://download.microsoft.com/download/2/8/5/28564B23-0828-408F-8631-23B1EFF1DAC8/stairs.zip
+```
 
 ## 3. Scope and architecture
 
