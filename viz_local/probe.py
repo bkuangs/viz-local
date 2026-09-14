@@ -289,8 +289,15 @@ def calibrate_reference_camera(
         "coordinate_origin": "COLMAP pixel coordinates; image corner (0,0)",
         "provenance": "Effective camera fitted only to reference RGB matches and original "
                       "reference poses; not a manufacturer or RGB/depth extrinsic calibration",
-        "pose_assumption": "Original provided camera poses approximate RGB camera poses; "
-                           "unknown RGB/depth extrinsics and tracking errors remain",
+        "pose_assumption": "Original poses describe the depth sensor. This effective RGB "
+                           "projection model explicitly assumes identity depth-to-RGB "
+                           "extrinsics; physical sensor offset and tracking errors remain.",
+        "original_pose_sensor": "depth",
+        "depth_to_rgb_assumption": np.eye(4).tolist(),
+        "sensor_frame_sources": [
+            "https://arxiv.org/html/2109.00524",
+            "https://github.com/nianticlabs/ace/blob/main/datasets/setup_7scenes.py",
+        ],
         "fit_images": [row["image_path"] for row in fit],
         "holdout_reference_images": [row["image_path"] for row in holdout],
         "fit_pair_accounting": fit_accounting,
@@ -394,6 +401,113 @@ def triangulate_reference_group(
     }
 
 
+def independent_reference_reprojection(
+    config: dict, rows: list[dict], poses: dict, fit_model: pycolmap.Reconstruction,
+    features: Path, matches: Path, output: Path,
+) -> dict:
+    fit_images = {image.name: image for image in fit_model.images.values()}
+    if set(fit_images) & {row["image_path"] for row in rows}:
+        raise ValueError("Held-out references must not have contributed to the fit map")
+    policy = config["probe"]["independent_reprojection"]
+    output.mkdir(parents=True, exist_ok=True)
+    per_image, pooled = {}, []
+    for row in rows:
+        name = row["image_path"]
+        correspondences = set()
+        candidate_matches = 0
+        for fit_name, image in sorted(fit_images.items()):
+            indices, scores = get_matches(matches, name, fit_name)
+            if not np.isfinite(scores).all():
+                raise ValueError(f"Non-finite held-out match scores for {name}, {fit_name}")
+            indices = indices[scores >= config["probe"]["calibration"]["min_match_score"]]
+            candidate_matches += len(indices)
+            for held_index, fit_index in indices:
+                point = image.points2D[int(fit_index)]
+                if point.has_point3D():
+                    correspondences.add((int(held_index), point.point3D_id))
+        ordered = sorted(correspondences)
+        image_result = {
+            "candidate_pair_matches": candidate_matches,
+            "deduplicated_2d3d_correspondences": len(ordered),
+            "positive_depth_correspondences": 0,
+            "nonpositive_depth_correspondences": 0,
+            "occupied_4x4_cells": 0,
+            "reprojection": None,
+            "status": "no_map_correspondences",
+        }
+        per_image[name] = image_result
+        if not ordered:
+            continue
+        keypoint_indices = np.array([pair[0] for pair in ordered])
+        point_ids = np.array([pair[1] for pair in ordered])
+        keypoints = get_keypoints(features, name)[keypoint_indices].astype(float) + 0.5
+        points = np.array([fit_model.points3D[int(point_id)].xyz for point_id in point_ids])
+        transform = pycolmap.Rigid3d(invert_pose(poses[name])[:3])
+        camera_points = transform * points
+        positive = camera_points[:, 2] > 0
+        image_result["positive_depth_correspondences"] = int(positive.sum())
+        image_result["nonpositive_depth_correspondences"] = int((~positive).sum())
+        if not positive.any():
+            image_result["status"] = "no_positive_depth"
+            continue
+        camera = fit_model.cameras[1]
+        projected = camera.img_from_cam(camera_points[positive])
+        residual_vectors = projected - keypoints[positive]
+        errors = np.linalg.norm(residual_vectors, axis=1)
+        pooled.extend(errors.tolist())
+        cells = np.floor((keypoints[positive] - 0.5) / np.array([160, 120])).astype(int)
+        image_result.update({
+            "occupied_4x4_cells": len(np.unique(cells, axis=0)),
+            "reprojection": residual_summary(errors),
+            "median_residual_vector_px": np.median(residual_vectors, axis=0).tolist(),
+            "status": "projected_without_pose_or_point_refinement",
+        })
+        for label, mask in {
+            "depth_below_2m": camera_points[positive, 2] < 2,
+            "depth_at_least_2m": camera_points[positive, 2] >= 2,
+            "image_center_radius_below_160px":
+                np.linalg.norm(keypoints[positive] - [320, 240], axis=1) < 160,
+            "image_outer_radius_at_least_160px":
+                np.linalg.norm(keypoints[positive] - [320, 240], axis=1) >= 160,
+        }.items():
+            image_result[label] = residual_summary(errors[mask]) if mask.any() else None
+        np.savez_compressed(
+            output / f"{row['sequence_id']}-{Path(name).stem}.npz",
+            keypoint_indices=keypoint_indices, point_ids=point_ids,
+            observed_keypoints=keypoints, points3D=points,
+            camera_points=camera_points, positive_depth=positive,
+            projected_keypoints=projected, residual_vectors=residual_vectors,
+        )
+    aggregate = residual_summary(np.asarray(pooled)) if pooled else None
+    checks = {
+        "heldout_median": aggregate is not None and aggregate["median_px"] <= policy["median_max_px"],
+        "heldout_p90": aggregate is not None and aggregate["p90_px"] <= policy["p90_max_px"],
+        "per_image_support": all(
+            item["positive_depth_correspondences"] >= policy["min_correspondences_per_image"]
+            for item in per_image.values()
+        ),
+        "per_image_spatial_coverage": all(
+            item["occupied_4x4_cells"] >= policy["min_occupied_4x4_cells_per_image"]
+            for item in per_image.values()
+        ),
+        "positive_depth": policy["allow_nonpositive_depth"] or all(
+            item["nonpositive_depth_correspondences"] == 0 for item in per_image.values()
+        ),
+    }
+    report = {
+        "scope": "Predict held-out reference observations from fit-only 3D points and "
+                 "unchanged known held-out depth poses under identity depth-to-RGB. "
+                 "No held-out pose/point refinement or reprojection-error filtering.",
+        "correspondence_policy": "LightGlue score >= calibration.min_match_score; "
+                                 "deduplicate each (heldout_keypoint, fit_map_point) pair "
+                                 "across fit views; retain ambiguous associations",
+        "per_image": per_image, "reprojection": aggregate, "checks": checks,
+        "acceptance_policy": policy, "passed": all(checks.values()),
+    }
+    write_json(output / "summary.json", report)
+    return report
+
+
 def run_geometry(
     config: dict, references: list[dict], features: Path, matches: Path,
     evidence: dict, output: Path,
@@ -423,16 +537,23 @@ def run_geometry(
         calibration, poses = calibrate_reference_camera(config, references, features, matches)
         write_json(run_dir / "calibration.json", calibration)
         groups = {}
+        independent = None
         if calibration["accepted_for_triangulation_probe"]:
             fit, holdout = reference_groups(references)
             for name, rows in (("fit", fit), ("holdout", holdout)):
                 groups[name] = triangulate_reference_group(
                     config, rows, poses, calibration["params"], features, matches, run_dir / name
                 )
+            independent = independent_reference_reprojection(
+                config, holdout, poses,
+                pycolmap.Reconstruction(groups["fit"]["model_path"]),
+                features, matches, run_dir / "independent_reprojection",
+            )
         report = {
             "identity": identity,
             "calibration": calibration,
             "triangulation": groups,
+            "independent_reprojection": independent,
             "geometry_wall_seconds": perf_counter() - start,
             "model_sha256": {
                 str(path): sha256_file(path)
@@ -440,14 +561,13 @@ def run_geometry(
                 for path in sorted(Path(group["model_path"]).glob("*.bin"))
             },
             "passed": calibration["accepted_for_triangulation_probe"]
-                      and len(groups) == 2 and all(group["passed"] for group in groups.values()),
+                      and len(groups) == 2 and all(group["passed"] for group in groups.values())
+                      and independent is not None and independent["passed"],
             "scope": "Reference-only geometry plausibility, not query localization or "
                      "a metric-accuracy guarantee; no reference/query alignment applied",
         }
         write_json(summary_path, report)
     write_json(output / "latest.json", {"summary_path": str(summary_path), "passed": report["passed"]})
-    if not report["passed"]:
-        raise RuntimeError(f"RGB geometry probe did not pass; review {summary_path} before proceeding")
     return report
 
 
@@ -480,6 +600,7 @@ def checkpoint_summary(manifest: dict, evidence: dict, report: dict, output: Pat
                 "pose_assumption", "fit_images", "holdout_reference_images",
                 "fit_sampson", "holdout_sampson", "initial_holdout_sampson",
                 "solutions", "jacobian_condition_number", "checks", "acceptance_policy",
+                "original_pose_sensor", "depth_to_rgb_assumption", "sensor_frame_sources",
             )
         },
         "triangulation": {
@@ -490,6 +611,7 @@ def checkpoint_summary(manifest: dict, evidence: dict, report: dict, output: Pat
             )} for name, group in report["triangulation"].items()
         },
         "geometry_wall_seconds": report["geometry_wall_seconds"],
+        "independent_reprojection": report["independent_reprojection"],
         "model_sha256": report["model_sha256"],
     }
 
@@ -547,11 +669,17 @@ def main() -> None:
             "geometry_passed": report["passed"],
             "intrinsics": report["calibration"]["params"],
             "heldout_reference_sampson": report["calibration"]["holdout_sampson"],
+            "independent_reprojection": report["independent_reprojection"],
             "triangulation": {
                 name: {key: group[key] for key in ("points3D", "observations", "reprojection", "passed")}
                 for name, group in report["triangulation"].items()
             },
         }, indent=2))
+        if not report["passed"]:
+            raise SystemExit(
+                f"RGB geometry acceptance failed; review {args.output / 'latest.json'}. "
+                "Stop for approval rather than tune these gates."
+            )
 
 
 if __name__ == "__main__":

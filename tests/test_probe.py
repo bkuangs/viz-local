@@ -1,9 +1,17 @@
 import unittest
+from pathlib import Path
+import tempfile
 
+import h5py
 import numpy as np
 import pycolmap
+from hloc.utils.parsers import names_to_pair
 
-from viz_local.probe import reference_groups, residual_summary, sampson_residuals, select_references
+from viz_local.geometry import reference_model
+from viz_local.probe import (
+    independent_reference_reprojection, reference_groups, residual_summary,
+    sampson_residuals, select_references,
+)
 
 
 class ReferenceSelectionTests(unittest.TestCase):
@@ -74,6 +82,61 @@ class ReferenceSelectionTests(unittest.TestCase):
         for values in (np.array([]), np.array([float("nan")])):
             with self.assertRaises(ValueError):
                 residual_summary(values)
+
+
+class IndependentReprojectionTests(unittest.TestCase):
+    def test_deduplication_and_heldout_errors_cannot_refit_structure(self):
+        pose_b = np.eye(4)
+        pose_b[0, 3] = 0.1
+        model = reference_model(
+            {"fit-a.png": np.eye(4), "fit-b.png": pose_b},
+            np.array([600, 600, 320, 240]),
+        )
+        point3d = np.array([0.0, 0.0, 2.0])
+        for image in model.images.values():
+            xy = model.cameras[1].img_from_cam(image.cam_from_world() * point3d)
+            image.points2D = pycolmap.Point2DList([pycolmap.Point2D(xy)])
+        point_id = model.add_point3D(point3d, pycolmap.Track([
+            pycolmap.TrackElement(1, 0), pycolmap.TrackElement(2, 0),
+        ]))
+        held_pose = np.eye(4)
+        held_pose[0, 3] = 0.05
+        rows = [{"image_path": "held.png", "sequence_id": "seq-01"}]
+        config = {"probe": {
+            "calibration": {"min_match_score": 0.2},
+            "independent_reprojection": {
+                "median_max_px": 2, "p90_max_px": 5,
+                "min_correspondences_per_image": 1,
+                "min_occupied_4x4_cells_per_image": 1,
+                "allow_nonpositive_depth": False,
+            },
+        }}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            features, matches = root / "features.h5", root / "matches.h5"
+            with h5py.File(matches, "w") as stream:
+                for name in ("fit-a.png", "fit-b.png"):
+                    group = stream.create_group(names_to_pair("held.png", name))
+                    group.create_dataset("matches0", data=np.array([0], dtype=np.int16))
+                    group.create_dataset("matching_scores0", data=[0.9])
+            for offset in (0, 10):
+                with h5py.File(features, "w") as stream:
+                    stream.create_dataset("held.png/keypoints", data=[[304.5 + offset, 239.5]])
+                result = independent_reference_reprojection(
+                    config, rows, {"held.png": held_pose}, model,
+                    features, matches, root / "output",
+                )
+                image_result = result["per_image"]["held.png"]
+                self.assertEqual(image_result["candidate_pair_matches"], 2)
+                self.assertEqual(image_result["deduplicated_2d3d_correspondences"], 1)
+                self.assertAlmostEqual(result["reprojection"]["median_px"], offset)
+                self.assertEqual(result["passed"], offset == 0)
+                np.testing.assert_array_equal(model.points3D[point_id].xyz, point3d)
+            with self.assertRaisesRegex(ValueError, "contributed to the fit map"):
+                independent_reference_reprojection(
+                    config, [{"image_path": "fit-a.png"}], {}, model,
+                    features, matches, root / "leak",
+                )
 
 
 if __name__ == "__main__":

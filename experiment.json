@@ -49,6 +49,14 @@
       "reprojection_p90_max_px": 4,
       "positive_depth_fraction_min": 1,
       "images_with_points_fraction_min": 0.8
+    },
+    "independent_reprojection": {
+      "median_max_px": 2,
+      "p90_max_px": 5,
+      "min_correspondences_per_image": 30,
+      "min_occupied_4x4_cells_per_image": 8,
+      "allow_nonpositive_depth": false,
+      "policy_provenance": "Added after source review and before this independent measurement; do not tune on its result"
     }
   }
 }
