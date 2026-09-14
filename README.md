@@ -109,6 +109,60 @@ The selected 700 originals occupy about 299 MB across 1,400 RGB/pose files.
 intrinsics are deliberately pending in the data manifest; they must come from
 the separate reference-only probe, never from assumed depth-camera calibration.
 
+## Chunk 1 reference-only probe
+
+```bash
+PYTHONHASHSEED=17 MPLBACKEND=Agg OMP_NUM_THREADS=4 \
+  uv run --locked python -m viz_local.probe --summary results/chunk1/probe.json
+```
+
+The probe selects 26 of the reference images, extracts native-resolution
+SuperPoint features with a 2,048-keypoint cap, and matches their 325 pairs with
+LightGlue on CUDA. It uses 20 references to fit a shared effective `PINHOLE`
+camera and reserves six other references for geometry sanity evidence. These
+are **reference-only calibration subsets**, not the confidence-fit/calibration
+query roles. No query attempts have run.
+
+Camera fitting uses PyCOLMAP's known-pose essential matrices and pixel-space
+Sampson residuals, with SciPy's bounded robust least squares. Generic VGA seeds,
+two-start stability, reference baselines, match filtering, and numeric exit
+criteria were declared in `experiment.json` before fitting. hloc/PyCOLMAP then
+triangulate the fit and held-out reference groups independently with camera
+poses and fitted intrinsics fixed; no alignment is applied.
+
+Observed effective parameters at 640x480 are approximately
+`fx=517.038, fy=526.418, cx=316.418, cy=240.131` in COLMAP pixel coordinates.
+Held-out reference Sampson error is **1.85 px median / 6.19 px p90**, with
+**76.6% within 4 px**. The saved fit/holdout sparse probes have **2,514 / 791
+points**, with median reprojection errors **1.71 / 1.24 px**. All retained
+observations have positive depth; reference pose matrices change only at
+floating-point roundoff. These are plausibility results, not localization
+accuracy or proof of physical RGB calibration. In particular, COLMAP filters
+map observations at 4 px, so their residuals describe a selected subset.
+
+The original data is uncalibrated. Unknown RGB/depth extrinsics, tracking
+errors, lens distortion, and temporal dependence remain; a small inlier
+reprojection error does not validate the proposed 5 cm correctness threshold.
+No supplied SfM model, rendered depth, or query-derived calibration/alignment
+was used. Source-based calibration caveats are still being reviewed before
+closing Chunk 1.
+
+Full identities, pair accounting, weights/model hashes, and effective solver
+settings stay under `artifacts/chunk1/probe/`; `latest.json` points to the
+retained geometry report. A local matched-pair image is
+`artifacts/chunk1/probe/reference_pair.png`. Completed caches are integrity
+checked and reused; configuration/source changes isolate geometry outputs.
+Fresh multi-threaded upstream RANSAC runs can vary slightly despite seeds, so
+the saved models and hashes identify the exact observed result.
+
+Reference extraction took 0.71 s and matching 12.24 s, including model setup
+and the initial LightGlue weight download. Peak PyTorch allocated/reserved GPU
+memory was about 159/236 MiB; the observed images yielded only 517-1,187
+keypoints, so this is not a worst-case 2,048-keypoint memory measurement.
+These timings are not warmed full-query latency. Workspace use is about
+9.1 GiB; the shared `uv` cache separately totals about 12 GiB, may include
+pre-existing content and hard-linked files, and was not deleted.
+
 ## References
 
 - [hloc](https://github.com/cvg/Hierarchical-Localization)

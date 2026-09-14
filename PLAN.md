@@ -8,7 +8,7 @@ Build a small, reproducible experiment around this hypothesis:
 
 Success means answering that question honestly with held-out evidence and understandable failure cases. It does not require a positive result, a particular AUROC, or a new localization algorithm. Do not fill the resume placeholders with targets or development-set results.
 
-**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. The pinned CUDA environment, Chess role manifest, pose-convention helpers, and real reference extraction/matching are complete. RGB calibration and triangulation exit evidence are pending. Chunk 2 is not authorized.
+**Current state:** the plan and Balanced budget are approved. Chunk 1 was explicitly authorized on 2026-09-14, including focused commits along the way, and is in progress. Environment/data preparation, GPU matching, pose conventions, and reference-only calibration/triangulation probes are complete. Final source-based calibration caveats and the checkpoint recommendation are pending. Chunk 2 is not authorized.
 
 Work one chunk at a time. At every checkpoint, report the artifacts, observed results, time/storage used, blockers, and recommended next decision. Stop and wait for explicit approval before starting another chunk. If a chunk fails its exit criteria, discuss a bounded recovery attempt rather than silently expanding scope.
 
@@ -16,7 +16,7 @@ On resuming, read this file, inspect the actual repository/artifacts, and update
 
 | Chunk | Status | Approval needed next |
 | --- | --- | --- |
-| 1. Environment, data, and pose conventions | In progress; environment, data roles, pose helpers, and GPU matching complete | Review RGB geometry evidence before authorizing Chunk 2 |
+| 1. Environment, data, and pose conventions | Technical evidence collected; calibration caveat review pending | Review the completed checkpoint before authorizing Chunk 2 |
 | 2. One-scene localization and failure audit | Not started | Pilot design approved after Chunk 1 |
 | 3. Confidence model and development comparison | Not started | Failure evidence and features approved |
 | 4. Frozen held-out benchmark | Not started | Protocol and any scene expansion approved |
@@ -203,6 +203,33 @@ Inspect official sequence lists and define the four data roles. Establish the RG
 **Exit evidence:** one real image pair passes through extraction/matching on the intended device; known transforms confirm camera-center and rotation-error calculations; reference/query roles are disjoint; a small reference-only triangulation/reprojection probe is geometrically plausible. Save exact versions and commands.
 
 **Pause:** approve the split, calibration/ground-truth caveats, initial feature budget, estimated cost, and Chunk 2. If RGB geometry is not defensible, stop here and discuss a dataset or mapping adjustment.
+
+**Observed technical evidence (2026-09-14):** reproducible commands and source
+pins are in README, `scripts/bootstrap.sh`, and `uv.lock`. Small summaries are
+in `results/chunk1/{environment,data,probe}.json`; full assets remain ignored.
+The official Chess splits support 200 reference, 50 confidence-fit, 50
+confidence-calibration, and 400 provisional final originals using whole
+sequences. No query attempts have run or query pose values been interpreted.
+
+The GPU probe processed 26 references and 325 pairs at native 640x480 with a
+2,048-feature cap. A shared effective PINHOLE camera, fitted on 20 references
+only, gave 1.85 px median / 6.19 px p90 Sampson error on six other references;
+76.6% of those selected matches were within 4 px. Independent fit/holdout
+triangulations produced 2,514/791 points, median reprojection errors of
+1.71/1.24 px, positive retained-observation depths, and unchanged reference
+poses up to floating-point roundoff. This passes the declared numerical
+plausibility criteria but is not physical RGB/depth calibration or a
+validation of centimeter-level query labels. Map residuals are additionally
+subject to COLMAP's 4 px observation filter.
+
+The working tree uses about 9.1 GiB, excluding the separately shared `uv`
+cache (about 12 GiB total, with possible pre-existing/hard-linked content).
+The Chess archive download took about 17 minutes while package installation
+ran concurrently. Reference extraction/matching took 0.71/12.24 seconds,
+including initial setup and matcher-weight download; geometry took about
+0.94 seconds. These are probe timings, not online query latency. No native
+Linux migration, cloud infrastructure, or additional scene was needed.
+The final caveat assessment and checkpoint recommendation remain pending.
 
 ### Chunk 2: Working one-scene localization and failure audit (about 8-12 hours)
 

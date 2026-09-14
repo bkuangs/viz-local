@@ -1,0 +1,214 @@
+{
+  "calibration": {
+    "acceptance_policy": {
+      "holdout_sampson_fraction_within_4px_min": 0.7,
+      "holdout_sampson_median_max_px": 2,
+      "images_with_points_fraction_min": 0.8,
+      "initialization_max_parameter_difference_px": 2,
+      "maximum_jacobian_condition_number": 1000000,
+      "positive_depth_fraction_min": 1,
+      "reprojection_median_max_px": 2,
+      "reprojection_p90_max_px": 4,
+      "triangulated_points_min_per_group": 100
+    },
+    "camera_model": "PINHOLE",
+    "checks": {
+      "full_rank_well_conditioned_jacobian": true,
+      "heldout_fraction_within_4px": true,
+      "heldout_median": true,
+      "initialization_stability": true,
+      "no_bound_hit": true,
+      "optimizers_converged": true
+    },
+    "fit_images": [
+      "seq-01/frame-000000.color.png",
+      "seq-01/frame-000080.color.png",
+      "seq-01/frame-000240.color.png",
+      "seq-01/frame-000320.color.png",
+      "seq-01/frame-000400.color.png",
+      "seq-01/frame-000560.color.png",
+      "seq-01/frame-000640.color.png",
+      "seq-01/frame-000720.color.png",
+      "seq-01/frame-000880.color.png",
+      "seq-01/frame-000960.color.png",
+      "seq-02/frame-000000.color.png",
+      "seq-02/frame-000080.color.png",
+      "seq-02/frame-000240.color.png",
+      "seq-02/frame-000320.color.png",
+      "seq-02/frame-000400.color.png",
+      "seq-02/frame-000560.color.png",
+      "seq-02/frame-000640.color.png",
+      "seq-02/frame-000720.color.png",
+      "seq-02/frame-000880.color.png",
+      "seq-02/frame-000960.color.png"
+    ],
+    "fit_sampson": {
+      "count": 22838,
+      "fraction_within_4px": 0.8071197127594361,
+      "median_px": 1.9357250307275127,
+      "p90_px": 5.353226471132324
+    },
+    "holdout_reference_images": [
+      "seq-01/frame-000160.color.png",
+      "seq-01/frame-000480.color.png",
+      "seq-01/frame-000800.color.png",
+      "seq-02/frame-000160.color.png",
+      "seq-02/frame-000480.color.png",
+      "seq-02/frame-000800.color.png"
+    ],
+    "holdout_sampson": {
+      "count": 1717,
+      "fraction_within_4px": 0.7664531158998252,
+      "median_px": 1.8500115966037396,
+      "p90_px": 6.186467894800228
+    },
+    "image_size": [
+      640,
+      480
+    ],
+    "initial_holdout_sampson": {
+      "count": 1717,
+      "fraction_within_4px": 0.21258008153756552,
+      "median_px": 9.031673038444316,
+      "p90_px": 22.337749639686958
+    },
+    "jacobian_condition_number": 2.7447611323604635,
+    "parameter_order": [
+      "fx",
+      "fy",
+      "cx",
+      "cy"
+    ],
+    "params": [
+      517.0378388244544,
+      526.4181382564075,
+      316.41836444489024,
+      240.1308573081911
+    ],
+    "pose_assumption": "Original provided camera poses approximate RGB camera poses; unknown RGB/depth extrinsics and tracking errors remain",
+    "provenance": "Effective camera fitted only to reference RGB matches and original reference poses; not a manufacturer or RGB/depth extrinsic calibration",
+    "solutions": [
+      {
+        "cost": 48846.382879559824,
+        "evaluations": 9,
+        "message": "`ftol` termination condition is satisfied.",
+        "params": [
+          517.0378388244544,
+          526.4181382564075,
+          316.41836444489024,
+          240.1308573081911
+        ],
+        "success": true
+      },
+      {
+        "cost": 48846.382879560886,
+        "evaluations": 9,
+        "message": "`ftol` termination condition is satisfied.",
+        "params": [
+          517.0378383719267,
+          526.4181354095448,
+          316.418364046349,
+          240.13085956716847
+        ],
+        "success": true
+      }
+    ]
+  },
+  "data_manifest_id": "27797ae528ae967799cb785e783a01b9b6e4e026ab22367a6a3b1dc583c9cade",
+  "features": {
+    "cuda_peak_allocated_bytes": 166227456,
+    "cuda_peak_reserved_bytes": 247463936,
+    "extraction_wall_seconds": 0.7062009240034968,
+    "images": 26,
+    "keypoints_min_median_max": [
+      517,
+      882.0,
+      1187
+    ],
+    "matches_min_median_max": [
+      2,
+      140.0,
+      597
+    ],
+    "matching_wall_seconds": 12.23593948299822,
+    "pairs": 325,
+    "timing_scope": "Reference probe only; includes setup/decoding and any weight download, may resume partial caches; not warmed full-query latency",
+    "weight_sha256": {
+      "external/hloc/third_party/SuperGluePretrainedNetwork/models/weights/superpoint_v1.pth": "52b6708629640ca883673b5d5c097c4ddad37d8048b33f09c8ca0d69db12c40e",
+      "weights/torch/hub/checkpoints/superpoint_lightglue_v0-1_arxiv.pth": "6ff7040d0a497fc6639337946d7538dae07428c18f77a067a0b5a960e7cc551a"
+    }
+  },
+  "geometry_passed": true,
+  "geometry_report": "artifacts/chunk1/probe/geometry/c03b4097adb02833/summary.json",
+  "geometry_wall_seconds": 0.9374574909961666,
+  "model_sha256": {
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model/cameras.bin": "3db96f4a257e15c040fc1fd3a7cb79626a0ffa4e51eab3aef3e06a384e2ee346",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model/frames.bin": "425dc0eb19bcc99d6b1e894919a677174a740647c33103d0489a24d55b0bb691",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model/images.bin": "92f09e6124ec1aef7cf7138dfc109810df291342990640e8559abf40a0c8696f",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model/points3D.bin": "01dfa37529545d4588c5dbe9a7ab492f6c0ff6b57d679cfcc3bc5bf389a50096",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model/rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model/cameras.bin": "3db96f4a257e15c040fc1fd3a7cb79626a0ffa4e51eab3aef3e06a384e2ee346",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model/frames.bin": "afd4731e62064377e7167111a452d3e61970720ff258ad8af8d522ad424ef2c6",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model/images.bin": "a70e50476cc301f8bac3cb3bfdad2aaaa34a7e6714e6236f8743d2714e9ee43b",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model/points3D.bin": "21def45f6bed53e87a49d87b72c4bec76ec253a8d80b596b038096fbd162c6bc",
+    "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model/rigs.bin": "73e4d5f0da0a84a5711b46ae716a149f1532832f95bb09b4b01e73cf2c5afbe9"
+  },
+  "query_attempts_run": 0,
+  "reference_pair_visualization": "artifacts/chunk1/probe/reference_pair.png",
+  "scope": "Reference-only geometry plausibility, not query localization or a metric-accuracy guarantee; no reference/query alignment applied",
+  "split_id": "063ada33e2d9baf6c0c74b33c75377f5db2ea62bd51c9aca4f2c1d2cfa0c7ca6",
+  "triangulation": {
+    "fit": {
+      "checks": {
+        "fixed_reference_poses": true,
+        "images_with_points": true,
+        "median_reprojection": true,
+        "p90_reprojection": true,
+        "point_count": true,
+        "positive_depth_fraction": true
+      },
+      "depth_median_m": 1.7049267062792102,
+      "depth_p90_m": 2.761723523194137,
+      "max_pose_matrix_change": 2.220446049250313e-16,
+      "model_path": "artifacts/chunk1/probe/geometry/c03b4097adb02833/fit/model",
+      "observations": 8664,
+      "passed": true,
+      "points3D": 2514,
+      "registered_images": 20,
+      "reprojection": {
+        "count": 8664,
+        "fraction_within_4px": 1.0,
+        "median_px": 1.7129123641338833,
+        "p90_px": 3.1605938934740445
+      },
+      "track_length_median": 3.0,
+      "wall_seconds": 0.4541385080010514
+    },
+    "holdout": {
+      "checks": {
+        "fixed_reference_poses": true,
+        "images_with_points": true,
+        "median_reprojection": true,
+        "p90_reprojection": true,
+        "point_count": true,
+        "positive_depth_fraction": true
+      },
+      "depth_median_m": 1.7286848608384897,
+      "depth_p90_m": 2.511938867106705,
+      "max_pose_matrix_change": 2.220446049250313e-16,
+      "model_path": "artifacts/chunk1/probe/geometry/c03b4097adb02833/holdout/model",
+      "observations": 1820,
+      "passed": true,
+      "points3D": 791,
+      "registered_images": 6,
+      "reprojection": {
+        "count": 1820,
+        "fraction_within_4px": 1.0,
+        "median_px": 1.2417730897872008,
+        "p90_px": 3.2450576242984157
+      },
+      "track_length_median": 2.0,
+      "wall_seconds": 0.077313611000136
+    }
+  }
+}
